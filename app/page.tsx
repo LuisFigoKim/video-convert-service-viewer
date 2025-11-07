@@ -1,0 +1,204 @@
+"use client";
+
+import { useState, useRef, useEffect, useCallback } from "react";
+import { VideoPlayer } from "@/components/video-player";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Play, AlertCircle } from "lucide-react";
+
+export default function Home() {
+  // Default demo HLS stream URL
+  const defaultUrl = "http://tempest-hmc-casper.s3-website.ap-northeast-2.amazonaws.com/converted/First-8K-Video-from-Space/master.m3u8";
+
+  const [inputUrl, setInputUrl] = useState("http://tempest-hmc-casper.s3-website.ap-northeast-2.amazonaws.com/converted/First-8K-Video-from-Space/master.m3u8");
+  const [videoUrl, setVideoUrl] = useState(defaultUrl);
+  const [error, setError] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+  const logEndRef = useRef<HTMLDivElement>(null);
+
+  // Validate if URL is an HLS URL
+  const validateHlsUrl = (url: string): boolean => {
+    if (!url || url.trim() === "") {
+      return false;
+    }
+
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname.toLowerCase();
+
+      // Check if URL ends with .m3u8 (HLS playlist)
+      if (pathname.endsWith(".m3u8")) {
+        return true;
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleLoadVideo = () => {
+    setError(null);
+
+    if (!inputUrl.trim()) {
+      setError("Please enter a URL");
+      return;
+    }
+
+    if (!validateHlsUrl(inputUrl)) {
+      setError("Invalid HLS URL. URL must end with .m3u8");
+      return;
+    }
+
+    // Valid HLS URL - load the video
+    setVideoUrl(inputUrl);
+    setError(null);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleLoadVideo();
+    }
+  };
+
+  const handleLog = useCallback((message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs((prev) => [...prev, `[${timestamp}] ${message}`]);
+  }, []);
+
+  const clearLogs = () => {
+    setLogs([]);
+  };
+
+  // Auto-scroll to bottom when new logs arrive
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            Autoever Video Player Demo
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            HLS Video Player with adaptive streaming
+          </p>
+        </div>
+
+        {/* URL Input Card */}
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle>Load HLS Video</CardTitle>
+              <CardDescription>
+                Enter an HLS stream URL (.m3u8) to play
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <Input
+                    type="url"
+                    placeholder="https://example.com/video.m3u8"
+                    value={inputUrl}
+                    onChange={(e) => setInputUrl(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className={error ? "border-red-500" : ""}
+                  />
+                  {error && (
+                    <div className="flex items-center gap-2 mt-2 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+                </div>
+                <Button onClick={handleLoadVideo} className="sm:w-auto">
+                  <Play className="h-4 w-4 mr-2" />
+                  Load Video
+                </Button>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <strong>Current URL:</strong>{" "}
+                  <code className="bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded text-xs break-all">
+                    {videoUrl}
+                  </code>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Video Player */}
+        <VideoPlayer key={videoUrl} src={videoUrl} onLog={handleLog} />
+
+        {/* Segment Loading Console */}
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Segment Loading Console</CardTitle>
+                  <CardDescription>
+                    Real-time HLS segment download tracking
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={clearLogs}>
+                  Clear Logs
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-black rounded-lg p-4 h-96 overflow-y-auto font-mono text-sm">
+                {logs.length === 0 ? (
+                  <div className="text-gray-500 text-center py-8">
+                    Waiting for video to load... Segments will appear here.
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {logs.map((log, index) => (
+                      <div
+                        key={index}
+                        className={`${
+                          log.includes("[Loading]")
+                            ? "text-yellow-400"
+                            : log.includes("[Loaded]")
+                            ? "text-green-400"
+                            : log.includes("[Buffered]")
+                            ? "text-blue-400"
+                            : log.includes("[HLS]")
+                            // ? "text-purple-400"
+                            // : log.includes("[Performance]")
+                            // ? "text-cyan-400"
+                            // : "text-gray-300"
+                        }`}
+                      >
+                        {log}
+                      </div>
+                    ))}
+                    <div ref={logEndRef} />
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                <p>
+                  <strong>Legend:</strong>{" "}
+                  <span className="text-purple-600">HLS Init</span> |{" "}
+                  <span className="text-yellow-600">Loading</span> →{" "}
+                  <span className="text-green-600">Loaded</span> →{" "}
+                  <span className="text-blue-600">Buffered</span> |{" "}
+                  {/*<span className="text-cyan-600">Performance</span>*/}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
