@@ -9,9 +9,9 @@ import { Play, AlertCircle } from "lucide-react";
 
 export default function Home() {
   // Default demo HLS stream URL
-  const defaultUrl = "http://tempest-hmc-casper.s3-website.ap-northeast-2.amazonaws.com/converted/First-8K-Video-from-Space/master.m3u8";
+  const defaultUrl = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
 
-  const [inputUrl, setInputUrl] = useState("http://tempest-hmc-casper.s3-website.ap-northeast-2.amazonaws.com/converted/First-8K-Video-from-Space/master.m3u8");
+  const [inputUrl, setInputUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(defaultUrl);
   const [error, setError] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
@@ -172,10 +172,10 @@ export default function Home() {
                             : log.includes("[Buffered]")
                             ? "text-blue-400"
                             : log.includes("[HLS]")
-                            // ? "text-purple-400"
-                            // : log.includes("[Performance]")
-                            // ? "text-cyan-400"
-                            // : "text-gray-300"
+                            ? "text-purple-400"
+                            : log.includes("[Performance]")
+                            ? "text-cyan-400"
+                            : "text-gray-300"
                         }`}
                       >
                         {log}
@@ -192,7 +192,7 @@ export default function Home() {
                   <span className="text-yellow-600">Loading</span> →{" "}
                   <span className="text-green-600">Loaded</span> →{" "}
                   <span className="text-blue-600">Buffered</span> |{" "}
-                  {/*<span className="text-cyan-600">Performance</span>*/}
+                  <span className="text-cyan-600">Performance</span>
                 </p>
               </div>
             </CardContent>
