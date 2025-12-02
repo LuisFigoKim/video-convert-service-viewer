@@ -19,24 +19,25 @@ export default function Home() {
 
   // Validate if URL is an HLS URL
   const validateHlsUrl = (url: string): boolean => {
-      console.log("Url : ", url);
-    if (!url || url.trim() === "") {
-      return false;
-    }
-
-    try {
-      const urlObj = new URL(url);
-      const pathname = urlObj.pathname.toLowerCase();
-
-      // Check if URL ends with .m3u8 (HLS playlist)
-      if (pathname.endsWith(".m3u8") || url.endsWith(".m3u8") || url.endsWith(".m3u8")) {
-        return true;
-      }
-
-      return false;
-    } catch {
-      return false;
-    }
+      return true;
+    //   console.log("Url : ", url);
+    // if (!url || url.trim() === "") {
+    //   return false;
+    // }
+    //
+    // try {
+    //   const urlObj = new URL(url);
+    //   const pathname = urlObj.pathname.toLowerCase();
+    //
+    //   // Check if URL ends with .m3u8 (HLS playlist)
+    //   if (pathname.endsWith(".m3u8") || url.endsWith(".m3u8") || url.endsWith(".m3u8")) {
+    //     return true;
+    //   }
+    //
+    //   return false;
+    // } catch {
+    //   return false;
+    // }
   };
 
   const handleLoadVideo = () => {
