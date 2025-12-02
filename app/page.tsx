@@ -19,6 +19,7 @@ export default function Home() {
 
   // Validate if URL is an HLS URL
   const validateHlsUrl = (url: string): boolean => {
+      console.log("Url : ", url);
     if (!url || url.trim() === "") {
       return false;
     }
@@ -28,7 +29,7 @@ export default function Home() {
       const pathname = urlObj.pathname.toLowerCase();
 
       // Check if URL ends with .m3u8 (HLS playlist)
-      if (pathname.endsWith(".m3u8")) {
+      if (pathname.endsWith(".m3u8") || url.endsWith(".m3u8") || url.endsWith(".m3u8")) {
         return true;
       }
 
