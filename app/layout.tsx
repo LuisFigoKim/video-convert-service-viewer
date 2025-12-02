@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Autoever Video Player Demo",
+  title: "Luis Video Player Demo",
   description: "HLS Video Player Demo built with Next.js 15",
 };
 

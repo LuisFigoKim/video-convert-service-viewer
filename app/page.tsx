@@ -5,7 +5,7 @@ import { VideoPlayer } from "@/components/video-player";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, AlertCircle } from "lucide-react";
+import { Play, AlertCircle, Loader2 } from "lucide-react";
 
 export default function Home() {
   // Default demo HLS stream URL
@@ -17,45 +17,82 @@ export default function Home() {
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  // Validate if URL is an HLS URL
-  const validateHlsUrl = (url: string): boolean => {
-      return true;
-    //   console.log("Url : ", url);
-    // if (!url || url.trim() === "") {
-    //   return false;
-    // }
-    //
-    // try {
-    //   const urlObj = new URL(url);
-    //   const pathname = urlObj.pathname.toLowerCase();
-    //
-    //   // Check if URL ends with .m3u8 (HLS playlist)
-    //   if (pathname.endsWith(".m3u8") || url.endsWith(".m3u8") || url.endsWith(".m3u8")) {
-    //     return true;
-    //   }
-    //
-    //   return false;
-    // } catch {
-    //   return false;
-    // }
+  const [isValidating, setIsValidating] = useState(false);
+
+  // Validate if URL returns valid M3U8 content
+  const validateHlsUrl = async (url: string): Promise<{ valid: boolean; error?: string }> => {
+    if (!url || url.trim() === "") {
+      return { valid: false, error: "URL is empty" };
+    }
+
+    try {
+      new URL(url); // Validate URL format
+    } catch {
+      return { valid: false, error: "Invalid URL format" };
+    }
+
+    try {
+      const response = await fetch(url, { method: "GET" });
+
+      if (!response.ok) {
+        return { valid: false, error: `HTTP error: ${response.status}` };
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      const validContentTypes = [
+        "application/octet-stream",
+        "application/vnd.apple.mpegurl",
+        "application/x-mpegurl",
+        "audio/mpegurl",
+        "audio/x-mpegurl",
+      ];
+
+      const isValidContentType = validContentTypes.some(type =>
+        contentType.toLowerCase().includes(type.toLowerCase())
+      );
+
+      if (!isValidContentType) {
+        return {
+          valid: false,
+          error: `Invalid content-type: ${contentType}. Expected application/octet-stream or HLS mime type`
+        };
+      }
+
+      const text = await response.text();
+
+      // Check if content starts with #EXTM3U (M3U8 header)
+      if (!text.trim().startsWith("#EXTM3U")) {
+        return { valid: false, error: "Response is not a valid M3U8 playlist (missing #EXTM3U header)" };
+      }
+
+      return { valid: true };
+    } catch (err) {
+      return { valid: false, error: `Failed to fetch URL: ${err instanceof Error ? err.message : "Unknown error"}` };
+    }
   };
 
-  const handleLoadVideo = () => {
+  const handleLoadVideo = async () => {
     setError(null);
+    setIsValidating(true);
 
     if (!inputUrl.trim()) {
       setError("Please enter a URL");
+      setIsValidating(false);
       return;
     }
 
-    if (!validateHlsUrl(inputUrl)) {
-      setError("Invalid HLS URL. URL must end with .m3u8");
+    const result = await validateHlsUrl(inputUrl);
+
+    if (!result.valid) {
+      setError(result.error || "Invalid HLS URL");
+      setIsValidating(false);
       return;
     }
 
     // Valid HLS URL - load the video
     setVideoUrl(inputUrl);
     setError(null);
+    setIsValidating(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -84,7 +121,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-            Autoever Video Player Demo
+            Luis Video Player Demo
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300">
             HLS Video Player with adaptive streaming
@@ -118,9 +155,13 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                <Button onClick={handleLoadVideo} className="sm:w-auto">
-                  <Play className="h-4 w-4 mr-2" />
-                  Load Video
+                <Button onClick={handleLoadVideo} disabled={isValidating} className="sm:w-auto">
+                  {isValidating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  {isValidating ? "Validating..." : "Load Video"}
                 </Button>
               </div>
 

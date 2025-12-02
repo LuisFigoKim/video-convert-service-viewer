@@ -278,6 +278,11 @@ export function VideoPlayer({ src, poster, autoPlay = false, onLog }: VideoPlaye
 
     video.currentTime = newTime;
     setCurrentTime(newTime);
+    if(isPlaying) {
+        video.play();
+    } else {
+        video.pause();
+    }
   };
 
   const handleProgressMouseDown = () => {
