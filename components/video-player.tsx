@@ -11,6 +11,7 @@ interface VideoPlayerProps {
   poster?: string;
   autoPlay?: boolean;
   onLog?: (message: string) => void;
+  jwtToken?: string;
 }
 
 interface BufferedRange {
@@ -18,7 +19,7 @@ interface BufferedRange {
   end: number;
 }
 
-export function VideoPlayer({ src, poster, autoPlay = false, onLog }: VideoPlayerProps) {
+export function VideoPlayer({ src, poster, autoPlay = false, onLog, jwtToken }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -109,6 +110,12 @@ export function VideoPlayer({ src, poster, autoPlay = false, onLog }: VideoPlaye
         backBufferLength: 0, // Keep all buffered data
         liveSyncDurationCount: 3, // For live streams
         liveMaxLatencyDurationCount: Infinity, // No max latency
+        // Add JWT Bearer token to all HLS requests (m3u8, playlist, segments)
+        xhrSetup: (xhr, url) => {
+          if (jwtToken) {
+            xhr.setRequestHeader("Authorization", `Bearer ${jwtToken}`);
+          }
+        },
       });
 
       hls.loadSource(src);
@@ -223,7 +230,7 @@ export function VideoPlayer({ src, poster, autoPlay = false, onLog }: VideoPlaye
         observer?.disconnect();
       };
     }
-  }, [src, autoPlay, isDragging, onLog]);
+  }, [src, autoPlay, isDragging, onLog, jwtToken]);
 
   const togglePlay = () => {
     const video = videoRef.current;

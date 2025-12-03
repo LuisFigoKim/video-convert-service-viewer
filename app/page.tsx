@@ -5,7 +5,7 @@ import { VideoPlayer } from "@/components/video-player";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, AlertCircle, Loader2 } from "lucide-react";
+import { Play, AlertCircle, Loader2, Key } from "lucide-react";
 
 export default function Home() {
   // Default demo HLS stream URL
@@ -18,6 +18,7 @@ export default function Home() {
   const logEndRef = useRef<HTMLDivElement>(null);
 
   const [isValidating, setIsValidating] = useState(false);
+  const [jwtToken, setJwtToken] = useState("");
 
   // Validate if URL returns valid M3U8 content
   const validateHlsUrl = async (url: string): Promise<{ valid: boolean; error?: string }> => {
@@ -32,7 +33,13 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch(url, { method: "GET" });
+      const headers: HeadersInit = {};
+      console.log("Jwt token : ",jwtToken);
+      if (jwtToken) {
+        headers["Authorization"] = `Bearer ${jwtToken}`;
+      }
+
+      const response = await fetch(url, { method: "GET", headers });
 
       if (!response.ok) {
         return { valid: false, error: `HTTP error: ${response.status}` };
@@ -165,6 +172,26 @@ export default function Home() {
                 </Button>
               </div>
 
+              {/* JWT Token Input */}
+              <div className="mt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Key className="h-4 w-4 text-gray-500" />
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    JWT Bearer Token (Optional)
+                  </label>
+                </div>
+                <Input
+                  type="password"
+                  placeholder="Enter JWT token for authenticated streams..."
+                  value={jwtToken}
+                  onChange={(e) => setJwtToken(e.target.value)}
+                  className="font-mono text-sm"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Token will be sent as Authorization: Bearer header with all HLS requests
+                </p>
+              </div>
+
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   <strong>Current URL:</strong>{" "}
@@ -178,7 +205,7 @@ export default function Home() {
         </div>
 
         {/* Video Player */}
-        <VideoPlayer key={videoUrl} src={videoUrl} onLog={handleLog} />
+        <VideoPlayer key={videoUrl} src={videoUrl} onLog={handleLog} jwtToken={jwtToken} />
 
         {/* Segment Loading Console */}
         <div className="max-w-4xl mx-auto">
